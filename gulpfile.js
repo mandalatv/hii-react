@@ -1,10 +1,25 @@
 /*global -$ */
 'use strict';
-// generated on 2015-06-08 using generator-gulp-webapp 0.3.0
+// generated on 2015-06-07 using generator-gulp-webapp 0.3.0
 var gulp = require('gulp');
 var $ = require('gulp-load-plugins')();
 var browserSync = require('browser-sync');
 var reload = browserSync.reload;
+var browserify = require('browserify');
+var source = require('vinyl-source-stream');
+
+gulp.task('scripts', function() {
+    return browserify({
+            //paths: ['./app/scripts/'],
+            entries: ['./app/scripts/App.js'],
+            transform: ['reactify'],
+            debug: true
+        })
+        .bundle()
+        .pipe(source('main.js'))
+        .pipe(gulp.dest('.tmp/scripts/'));
+});
+
 
 gulp.task('styles', function () {
   return gulp.src('app/styles/main.scss')
@@ -24,14 +39,15 @@ gulp.task('styles', function () {
 });
 
 gulp.task('jshint', function () {
-  return gulp.src('app/scripts/**/*.js')
+  //return gulp.src('app/scripts/**/*.js')
+  return gulp.src('app/scripts/main.js')
     .pipe(reload({stream: true, once: true}))
     .pipe($.jshint())
     .pipe($.jshint.reporter('jshint-stylish'))
     .pipe($.if(!browserSync.active, $.jshint.reporter('fail')));
 });
 
-gulp.task('html', ['styles'], function () {
+gulp.task('html', ['styles', 'scripts'], function () {
   var assets = $.useref.assets({searchPath: ['.tmp', 'app', '.']});
 
   return gulp.src('app/*.html')
@@ -75,7 +91,7 @@ gulp.task('extras', function () {
 
 gulp.task('clean', require('del').bind(null, ['.tmp', 'dist']));
 
-gulp.task('serve', ['styles', 'fonts'], function () {
+gulp.task('serve', ['styles', 'scripts', 'fonts'], function () {
   browserSync({
     notify: false,
     port: 9000,
@@ -91,11 +107,13 @@ gulp.task('serve', ['styles', 'fonts'], function () {
   gulp.watch([
     'app/*.html',
     'app/scripts/**/*.js',
+    '.tmp/scripts/**/*.js',
     'app/images/**/*',
     '.tmp/fonts/**/*'
   ]).on('change', reload);
 
   gulp.watch('app/styles/**/*.scss', ['styles']);
+  gulp.watch('app/scripts/**/*.js', ['scripts']);
   gulp.watch('app/fonts/**/*', ['fonts']);
   gulp.watch('bower.json', ['wiredep', 'fonts']);
 });
